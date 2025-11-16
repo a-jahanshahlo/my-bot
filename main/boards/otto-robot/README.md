@@ -111,7 +111,7 @@ Otto robots have a wide range of movement capabilities, including walking, turni
 - Hand movements require a hand servo to function. If no hand servo is configured, the relevant movements will be skipped.
 
 ### Example of MCP tool usage
-json
+```json
 // Take 3 steps forward
 {"name": "self.otto.walk_forward", "arguments": {}}
 
