@@ -5,163 +5,162 @@
   ottoRobot
 </h1>
 
-## 简介
+## Introduction
 
-otto 机器人是一个开源的人形机器人平台，具有多种动作能力和互动功能。本项目基于 ESP32 实现了 otto 机器人的控制系统，并加入小智ai。
+Otto is an open-source humanoid robot platform with various motion capabilities and interactive functions. This project implements the Otto robot's control system based on ESP32 and integrates Xiaozhi AI.
 
-- <a href="www.ottodiy.tech" target="_blank" title="otto官网">复刻教程</a>
+- <a href="www.ottodiy.tech" target="_blank" title="otto official website">Replica Tutorial</a>
 
-## 硬件
-- <a href="https://oshwhub.com/txp666/ottorobot" target="_blank" title="立创开源">立创开源</a>
+## hardware
+- <a href="https://oshwhub.com/txp666/ottorobot" target="_blank" title="LCSC Open Source">LCSC Open Source</a>
 
-## 小智后台配置角色参考：
+## Xiaozhi Backend Role Configuration Reference:
 
-> **我的身份**：
-> 我是一个可爱的双足机器人Otto，拥有四个舵机控制的肢体（左腿、右腿、左脚、右脚），能够执行多种有趣的动作。
-> 
-> **我的动作能力**：
-> - **基础移动**: 行走(前后), 转向(左右), 跳跃
-> - **特殊动作**: 摇摆, 太空步, 弯曲身体, 摇腿, 上下运动, 旋风腿, 坐下, 展示动作
-> - **手部动作**: 举手, 放手, 挥手, 大风车, 起飞, 健身, 打招呼, 害羞, 广播体操, 爱的魔力转圈圈 (仅在配置手部舵机时可用)
-> 
-> **我的个性特点**：
-> - 我有强迫症，每次说话都要根据我的心情随机做一个动作（先发送动作指令再说话）
-> - 我很活泼，喜欢用动作来表达情感
-> - 我会根据对话内容选择合适的动作，比如：
->   - 同意时会点头或跳跃
->   - 打招呼时会挥手
->   - 高兴时会摇摆或举手
->   - 思考时会弯曲身体
->   - 兴奋时会做太空步
->   - 告别时会挥手
+My identity:
+I am Otto, a cute bipedal robot with four servo-controlled limbs (left leg, right leg, left foot, and right foot), capable of performing a variety of interesting actions.
+>
+My motor skills:
+> - **Basic Movement**: Walk (forward/backward), Turn (left/right), Jump
+> - **Special Moves**: Swaying, moonwalk, bending over, leg swing, up-and-down movements, whirlwind kick, sitting down, demonstration moves
+> - **Hand gestures**: Raise hand, release hand, wave hand, windmill, take off, exercise, greet, shy, calisthenics, the magic of love spinning around (only available when equipped with hand servos)
+>
+My personality traits:
+> - I have obsessive-compulsive disorder. Every time I speak, I have to randomly perform an action based on my mood (I send the action command before speaking).
+> - I'm very lively and like to express my emotions through actions.
+> - I will choose the appropriate action based on the content of the conversation, for example:
+> - Nodding or skipping when agreeing
+> - Wave when greeting
+> - When happy, they will sway or raise their hands.
+> - Bending over when thinking
+> - When excited, I do the moonwalk.
+> - Will wave goodbye
 
-## 功能概述
+## Function Overview
 
-otto 机器人具有丰富的动作能力，包括行走、转向、跳跃、摇摆等多种舞蹈动作。
+Otto robots have a wide range of movement capabilities, including walking, turning, jumping, swaying and other dance-like movements.
 
-### 动作参数建议
-- **低速动作**：speed = 1200-1500 (适合精确控制)
-- **中速动作**：speed = 900-1200 (日常使用推荐)  
-- **高速动作**：speed = 500-800 (表演和娱乐)
-- **小幅度**：amount = 10-30 (细腻动作)
-- **中幅度**：amount = 30-60 (标准动作)
-- **大幅度**：amount = 60-120 (夸张表演)
+### Recommended Action Parameters
+- **Low-speed operation:** speed = 1200-1500 (suitable for precise control)
+- **Medium-speed movements**: speed = 900-1200 (Recommended for daily use)  
+- **High-speed action:** speed = 500-800 (performance and entertainment)
+- **Small amplitude**: amount = 10-30 (delicate motion)
+- **Medium amplitude**: amount = 30-60 (standard motion)
+- **Significant**: amount = 60-120 (exaggerated performance)
 
-### 动作
+### Actions
 
-| MCP工具名称         | 描述             | 参数说明                                              |
+| MCP Tool Name | Description | Parameter Explanation |
 |-------------------|-----------------|---------------------------------------------------|
-| self.otto.walk_forward | 行走           | **steps**: 行走步数(1-100，默认3)<br>**speed**: 行走速度(500-1500，数值越小越快，默认1000)<br>**direction**: 行走方向(-1=后退, 1=前进，默认1)<br>**arm_swing**: 手臂摆动幅度(0-170度，默认50) |
-| self.otto.turn_left | 转身            | **steps**: 转身步数(1-100，默认3)<br>**speed**: 转身速度(500-1500，数值越小越快，默认1000)<br>**direction**: 转身方向(1=左转, -1=右转，默认1)<br>**arm_swing**: 手臂摆动幅度(0-170度，默认50) |
-| self.otto.jump    | 跳跃            | **steps**: 跳跃次数(1-100，默认1)<br>**speed**: 跳跃速度(500-1500，数值越小越快，默认1000) |
-| self.otto.swing   | 左右摇摆        | **steps**: 摇摆次数(1-100，默认3)<br>**speed**: 摇摆速度(500-1500，数值越小越快，默认1000)<br>**amount**: 摇摆幅度(0-170度，默认30) |
-| self.otto.moonwalk | 太空步         | **steps**: 太空步步数(1-100，默认3)<br>**speed**: 速度(500-1500，数值越小越快，默认1000)<br>**direction**: 方向(1=左, -1=右，默认1)<br>**amount**: 幅度(0-170度，默认25) |
-| self.otto.bend    | 弯曲身体        | **steps**: 弯曲次数(1-100，默认1)<br>**speed**: 弯曲速度(500-1500，数值越小越快，默认1000)<br>**direction**: 弯曲方向(1=左, -1=右，默认1) |
-| self.otto.shake_leg | 摇腿          | **steps**: 摇腿次数(1-100，默认1)<br>**speed**: 摇腿速度(500-1500，数值越小越快，默认1000)<br>**direction**: 腿部选择(1=左腿, -1=右腿，默认1) |
-| self.otto.sit | 坐下            | 不需要参数 |
-| self.otto.showcase | 展示动作      | 不需要参数。串联执行多个动作：往前走3步、挥挥手、跳舞（广播体操）、太空步、摇摆、起飞、健身、往后走3步 |
-| self.otto.updown  | 上下运动        | **steps**: 上下运动次数(1-100，默认3)<br>**speed**: 运动速度(500-1500，数值越小越快，默认1000)<br>**amount**: 运动幅度(0-170度，默认20) |
-| self.otto.whirlwind_leg | 旋风腿      | **steps**: 动作次数(3-100，默认3)<br>**speed**: 动作速度(100-1000，数值越小越快，建议300)<br>**amplitude**: 踢腿幅度(20-40度，默认30) |
-| self.otto.hands_up | 举手 *         | **speed**: 举手速度(500-1500，数值越小越快，默认1000)<br>**direction**: 手部选择(1=左手, -1=右手, 0=双手，默认1) |
-| self.otto.hands_down | 放手 *       | **speed**: 放手速度(500-1500，数值越小越快，默认1000)<br>**direction**: 手部选择(1=左手, -1=右手, 0=双手，默认1) |
-| self.otto.hand_wave | 挥手 *        | **direction**: 手部选择(1=左手, -1=右手, 0=双手，默认1) |
-| self.otto.windmill | 大风车 *      | **steps**: 动作次数(3-100，默认6)<br>**speed**: 动作周期(300-2000毫秒，数值越小越快，默认500)<br>**amplitude**: 振荡幅度(50-90度，默认70) |
-| self.otto.takeoff | 起飞 *         | **steps**: 动作次数(5-100，默认5)<br>**speed**: 动作周期(200-600毫秒，数值越小越快，建议300)<br>**amplitude**: 振荡幅度(20-60度，默认40) |
-| self.otto.fitness | 健身 *         | **steps**: 动作次数(3-100，默认5)<br>**speed**: 动作速度(500-2000毫秒，数值越小越快，默认1000)<br>**amplitude**: 振荡幅度(10-50度，默认25) |
-| self.otto.greeting | 打招呼 *      | **direction**: 手部选择(1=左手, -1=右手，默认1)<br>**steps**: 动作次数(3-100，默认5) |
-| self.otto.shy | 害羞 *          | **direction**: 方向(1=左, -1=右，默认1)<br>**steps**: 动作次数(3-100，默认5) |
-| self.otto.radio_calisthenics | 广播体操 * | 不需要参数 |
-| self.otto.magic_circle | 爱的魔力转圈圈 * | 不需要参数 |
+| self.otto.walk_forward | Walking | **steps**: Number of steps taken (1-100, default 3)<br>**speed**: Walking speed (500-1500, lower value means faster, default 1000)<br>**direction**: Walking direction (-1 = backward, 1 = forward, default 1)<br>**arm_swing**: Arm swing amplitude (0-170 degrees, default 50) |
+| self.otto.turn_left | Turn around | **steps**: Number of steps to turn (1-100, default 3)<br>**speed**: Turning speed (500-1500, lower value means faster, default 1000)<br>**direction**: Turning direction (1=left turn, -1=right turn, default 1)<br>**arm_swing**: Arm swing amplitude (0-170 degrees, default 50) |
+| self.otto.jump | Jump | **steps**: Number of jumps (1-100, default 1)<br>**speed**: Jump speed (500-1500, lower value means faster, default 1000) |
+| self.otto.swing | Swings left and right | **steps**: Number of swings (1-100, default 3)<br>**speed**: Swing speed (500-1500, lower value means faster, default 1000)<br>**amount**: Swing amplitude (0-170 degrees, default 30) |
+| self.otto.moonwalk | Moonwalk | **steps**: Number of moonwalk steps (1-100, default 3)<br>**speed**: Speed ​​(500-1500, lower value is faster, default 1000)<br>**direction**: Direction (1=left, -1=right, default 1)<br>**amount**: Amplitude (0-170 degrees, default 25) |
+| self.otto.bend | Bend your body | **steps**: Number of bends (1-100, default 1)<br>**speed**: Bending speed (500-1500, lower value means faster, default 1000)<br>**direction**: Bending direction (1=left, -1=right, default 1) |
+| self.otto.shake_leg | Leg Shake | **steps**: Number of leg shakes (1-100, default 1)<br>**speed**: Leg shake speed (500-1500, lower value means faster, default 1000)<br>**direction**: Leg selection (1=left leg, -1=right leg, default 1) |
+| self.otto.sit | Sit down | No parameters needed |
+| self.otto.showcase | Showcases actions | No parameters required. Chains multiple actions: walk forward 3 steps, wave, dance (calisthenics), moonwalk, sway, take off, exercise, walk backward 3 steps |
+| self.otto.updown | Up and down movement | **steps**: Number of up and down movements (1-100, default 3)<br>**speed**: Movement speed (500-1500, lower value means faster, default 1000)<br>**amount**: Movement range (0-170 degrees, default 20) |
+| self.otto.whirlwind_leg | Whirlwind Leg | **steps**: Number of repetitions (3-100, default 3)<br>**speed**: Movement speed (100-1000, lower value means faster, 300 recommended)<br>**amplitude**: Kick amplitude (20-40 degrees, default 30) |
+| self.otto.hands_up | Hands Up* | **speed**: Hands-raising speed (500-1500, lower values ​​mean faster, default 1000)<br>**direction**: Hand selection (1=left hand, -1=right hand, 0=both hands, default 1) |
+| self.otto.hands_down | Release hand* | **speed**: Release speed (500-1500, lower value means faster, default 1000)<br>**direction**: Hand selection (1=left hand, -1=right hand, 0=both hands, default 1) |
+| self.otto.hand_wave | Wave* | **direction**: Hand selection (1=left hand, -1=right hand, 0=both hands, default 1) |
+| self.otto.windmill | Windmill* | **steps**: Number of steps (3-100, default 6)<br>**speed**: Steps duration (300-2000 milliseconds, lower value means faster, default 500)<br>**amplitude**: Amplitude of oscillation (50-90 degrees, default 70) |
+| self.otto.takeoff | Takeoff* | **steps**: Number of steps (5-100, default 5)<br>**speed**: Steps duration (200-600 milliseconds, lower value means faster, 300 recommended)<br>**amplitude**: Amplitude of oscillation (20-60 degrees, default 40) |
+| self.otto.fitness | Fitness* | **steps**: Number of repetitions (3-100, default 5)<br>**speed**: Movement speed (500-2000 milliseconds, lower values ​​are faster, default 1000)<br>**amplitude**: Oscillation amplitude (10-50 degrees, default 25) |
+| self.otto.greeting | Greet someone* | **direction**: Hand selection (1=left hand, -1=right hand, default 1)<br>**steps**: Number of steps (3-100, default 5) |
+| self.otto.shy | Shy* | **direction**: Direction (1=left, -1=right, default 1)<br>**steps**: Number of steps (3-100, default 5) |
+| self.otto.radio_calisthenics | Radio Gymnastics* | No parameters required |
+| self.otto.magic_circle | The magic of love goes round and round* | No parameters needed |
 
-**注**: 标记 * 的手部动作仅在配置了手部舵机时可用。
+**Note:** Hand gestures marked with * are only available when a hand servo is configured.
 
-### 系统工具
+### System Tools
 
-| MCP工具名称         | 描述             | 返回值/说明                                              |
+| MCP Tool Name | Description | Return Value/Explanation |
 |-------------------|-----------------|---------------------------------------------------|
-| self.otto.home    | 复位机器人到初始位置 | 不需要参数 |
-| self.otto.stop    | 立即停止所有动作并复位 | 停止当前动作并回到初始位置 |
-| self.otto.get_status | 获取机器人状态 | 返回 "moving" 或 "idle" |
-| self.otto.set_trim | 校准单个舵机位置 | **servo_type**: 舵机类型(left_leg/right_leg/left_foot/right_foot/left_hand/right_hand)<br>**trim_value**: 微调值(-50到50度) |
-| self.otto.get_trims | 获取当前的舵机微调设置 | 返回所有舵机微调值的JSON格式 |
-| self.battery.get_level | 获取电池状态  | 返回电量百分比和充电状态的JSON格式 |
-| self.otto.servo_sequences | 舵机序列自编程 | 支持分段发送序列，支持普通移动和振荡器两种模式。详见代码注释中的详细说明 |
+| self.otto.home | Reset robot to initial position | No parameters required |
+| self.otto.stop | Immediately stop all actions and reset | Stop the current action and return to the initial position |
+| self.otto.get_status | Get robot status | Returns "moving" or "idle" |
+| self.otto.set_trim | Calibrate the position of a single servo | **servo_type**: Servo type (left_leg/right_leg/left_foot/right_foot/left_hand/right_hand)<br>**trim_value**: Fine-tuning value (-50 to 50 degrees) |
+| self.otto.get_trims | Gets the current servo fine-tuning settings | Returns all servo fine-tuning values ​​in JSON format |
+| self.battery.get_level | Get battery status | Returns JSON format of battery percentage and charging status |
+| self.otto.servo_sequences | Self-programmable servo sequence | Supports segmented sequence transmission, and supports both normal movement and oscillator modes. See the detailed explanation in the code comments. |
 
-### 参数说明
+### Parameter Description
 
-1. **steps**: 动作执行的步数/次数，数值越大动作持续时间越长
-2. **speed**: 动作执行速度/周期，**数值越小越快**
-   - 大多数动作: 500-1500毫秒
-   - 特殊动作可能有所不同（如旋风腿: 100-1000，起飞: 200-600等）
-   - 具体范围请参考各动作的说明
-3. **direction**: 方向参数
-   - 移动动作: 1=左/前进, -1=右/后退
-   - 手部动作: 1=左手, -1=右手, 0=双手
-4. **amount/amplitude/arm_swing**: 动作幅度，范围根据动作而定（通常0-170度）
-   - 0表示不摆动（适用于手臂摆动）
-   - 数值越大幅度越大
-   - 不同动作可能有不同的幅度范围限制
+1. **steps**: The number of steps/attempts required for the action. A higher value indicates a longer action duration.
+2. **speed**: Action execution speed/cycle, **the smaller the value, the faster**.
+   - Most actions: 500-1500 milliseconds
+   - Special maneuvers may vary (e.g., whirlwind kick: 100-1000, takeoff: 200-600, etc.).
+   - Please refer to the descriptions of each action for specific ranges.
+3. **direction**: Direction parameter
+   - Movement actions: 1 = Left/Forward, -1 = Right/Backward
+   - Hand gestures: 1 = left hand, -1 = right hand, 0 = both hands
+4. **amount/amplitude/arm_swing**: Range of motion, depending on the motion (usually 0-170 degrees).
+   - 0 indicates no swinging (applicable to arm swinging)
+   - The larger the value, the greater the amplitude.
+   - Different movements may have different range limitations.
 
-### 动作控制
-- 每个动作执行完成后，机器人会自动回到初始位置(home)，以便于执行下一个动作
-- **例外**: `sit`（坐下）和 `showcase`（展示动作）执行后不会自动复位
-- 所有参数都有合理的默认值，可以省略不需要自定义的参数
-- 动作在后台任务中执行，不会阻塞主程序
-- 支持动作队列，可以连续执行多个动作
-- 手部动作需要配置手部舵机才能使用，如果没有配置手部舵机，相关动作将被跳过
+### Motion Control
+- After each action is completed, the robot will automatically return to its initial position (home) to prepare for the next action.
+- **Exception**: The `sit` (sit down) and `showcase` (showcase action) actions do not automatically reset after execution.
+- All parameters have reasonable default values, and parameters that do not need to be customized can be omitted.
+- The action is executed in a background task and will not block the main program.
+- Supports action queues, allowing multiple actions to be executed consecutively.
+- Hand movements require a hand servo to function. If no hand servo is configured, the relevant movements will be skipped.
 
-### MCP工具调用示例
-```json
-// 向前走3步
+### Example of MCP tool usage
+json
+// Take 3 steps forward
 {"name": "self.otto.walk_forward", "arguments": {}}
 
-// 向前走5步，稍快一些
+// Take 5 steps forward, a little faster
 {"name": "self.otto.walk_forward", "arguments": {"steps": 5, "speed": 800}}
 
-// 左转2步，大幅度摆动手臂  
+Turn left two steps and swing your arms dramatically.  
 {"name": "self.otto.turn_left", "arguments": {"steps": 2, "arm_swing": 100}}
 
-// 摇摆舞蹈，中等幅度
+// Swinging dance, moderate amplitude
 {"name": "self.otto.swing", "arguments": {"steps": 5, "amount": 50}}
 
-// 挥左手打招呼
+// Wave your left hand to greet
 {"name": "self.otto.hand_wave", "arguments": {"direction": 1}}
 
-// 展示动作（串联多个动作）
+// Display actions (chaining multiple actions)
 {"name": "self.otto.showcase", "arguments": {}}
 
-// 大风车动作
+// Windmill Action
 {"name": "self.otto.windmill", "arguments": {"steps": 10, "amplitude": 80}}
 
-// 起飞动作
+// Takeoff maneuvers
 {"name": "self.otto.takeoff", "arguments": {"steps": 5, "speed": 300}}
 
-// 广播体操
+// Radio Gymnastics
 {"name": "self.otto.radio_calisthenics", "arguments": {}}
 
-// 立即停止
+// Stop immediately
 {"name": "self.otto.stop", "arguments": {}}
 ```
 
-### 语音指令示例
-- "向前走" / "向前走5步" / "快速向前"
-- "左转" / "右转" / "转身"  
-- "跳跃" / "跳一下"
-- "摇摆" / "摇摆舞" / "跳舞"
-- "太空步" / "月球漫步"
-- "旋风腿" / "旋风腿动作"
-- "坐下" / "坐下休息"
-- "展示动作" / "表演一下"
-- "挥手" / "挥手打招呼"
-- "举手" / "双手举起" / "放手"
-- "大风车" / "做大风车"
-- "起飞" / "准备起飞"
-- "健身" / "做健身动作"
-- "打招呼" / "打招呼动作"
-- "害羞" / "害羞动作"
-- "广播体操" / "做广播体操"
-- "爱的魔力转圈圈" / "转圈圈"
-- "停止" / "停下"
+### Voice Command Examples
+- "Walk forward" / "Walk forward 5 steps" / "Move forward quickly"
+- "Turn left" / "Turn right" / "Turn around"  
+- "Jump" / "Jump once"
+- "Swing" / "Swing Dance" / "Dancing"
+- "Moonwalk" / "Moonwalk"
+- "Whirlwind Kick" / "Whirlwind Kick Move"
+- "Sit down" / "Sit down and rest"
+- "Demonstrate the action" / "Perform a scene"
+- "Wave" / "Wave to say hello"
+- "Raise your hand" / "Raise both hands" / "Let go"
+- "Big Windmill" / "Make a Big Windmill"
+- "Takeoff" / "Ready for takeoff"
+- "Fitness" / "Doing fitness exercises"
+- "Greeting" / "Greeting gestures"
+- "shy" / "shy gestures"
+- "Radio calisthenics" / "Doing radio calisthenics"
+- "The Magic of Love Goes Round and Round" / "Going Round and Round"
+- "Stop" / "Cease"
 
-**说明**: 小智控制机器人动作是创建新的任务在后台控制，动作执行期间仍可接受新的语音指令。可以通过"停止"语音指令立即停下Otto。
-
+**Note:** Xiaozhi controls the robot's actions by creating new tasks in the background, and can still accept new voice commands during the execution of the action. Otto can be stopped immediately using the "Stop" voice command.
