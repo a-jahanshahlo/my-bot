@@ -269,12 +269,4 @@ class RealTimeAFSKDecoder:
     def get_stats(self) -> dict:
         """Get decoding statistics"""
         return {
-            'prelude_bits': "".join(self.buffer_prelude),
-            "state": self.state,
-            'total_chars': sum(len(msg) for msg in self.text_cache),
-            'buffer_bits': len(self.signal_bits),
-            'mark_freq': self.mark_freq,
-            'space_freq': self.space_freq,
-            'bitrate': self.bitrate,
-            'threshold': self.threshold,
         }
