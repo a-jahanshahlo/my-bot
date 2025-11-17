@@ -194,10 +194,10 @@ class RealTimeAFSKDecoder:
             if p1_prob is not None:
                 bit = '1' if p1_prob > self.threshold else '0'
                 match self.state:
-                    case "idle":
+                    case "Idle":
                         self.buffer_prelude.append(bit)
                         pass
-                    case "entering":
+                    case "Entering":
                         self.buffer_prelude.append(bit)
                         self.signal_bits += bit
                         self.total_bits_received += 1
@@ -205,14 +205,14 @@ class RealTimeAFSKDecoder:
                         pass
                 self.indicators.append(p1_prob)
 
-                if self.state == "idle" and "".join(self.buffer_prelude) == self.start_bits:
-                    self.state = "entering"
                 # Check state machine
+                if self.state == "Idle" and "".join(self.buffer_prelude) == self.start_bits:
+                    self.state = "Entering"
                     self.text_cache = ""
                     self.signal_bits = ""  # Clear the bit sequence
                     self.buffer_prelude.clear()
-                elif self.state == "entering" and ("".join(self.buffer_prelude) == self.end_bits or len(self.signal_bits) >= 256):
-                    self.state = "idle"
+                elif self.state == "Entering" and ("".join(self.buffer_prelude) == self.end_bits or len(self.signal_bits) >= 256):
+                    self.state = "Idle"
                     self.buffer_prelude.clear()
 
                 # Try decoding after collecting a certain number of bits
