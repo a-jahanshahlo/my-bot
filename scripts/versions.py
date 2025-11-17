@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -10,7 +11,8 @@ import json
 import requests
 from requests.exceptions import RequestException
 
-# 切换到项目根目录
+# Switch to the project root directory
+
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def get_chip_id_string(chip_id):
@@ -77,15 +79,20 @@ def find_app_partition(data):
     partition_begin = 0x8000
     partition_end = partition_begin + 0x4000
     # find the first parition with type 0x00
+
     for i in range(partition_begin, partition_end, 0x20):
         # magic is aa 50
+
         if data[i] == 0xaa and data[i + 1] == 0x50:
             # type is app
+
             if data[i + 2] == 0x00:
                 # read offset and size
+
                 offset = struct.unpack("<I", data[i + 4:i + 8])[0]
                 size = struct.unpack("<I", data[i + 8:i + 12])[0]
                 # then 16 bytes is label
+
                 label = data[i + 12:i + 28].decode("utf-8").strip('\0')
                 print(f"found app partition at 0x{i:08x}, offset: 0x{offset:08x}, size: 0x{size:08x}, label: {label}")
                 return {
@@ -100,19 +107,23 @@ def read_binary(dir_path):
     merged_bin_data = open(merged_bin_path, "rb").read()
 
     # find app partition
+
     app_partition = find_app_partition(merged_bin_data)
     if app_partition is None:
         print("no app partition found")
         return
     app_data = merged_bin_data[app_partition["offset"]:app_partition["offset"] + app_partition["size"]]
     # check magic
+
     if app_data[0] != 0xE9:
         print("not a valid image")
         return
     # get flash size
+
     flash_size = get_flash_size(app_data[0x3] >> 4)
     chip_id = get_chip_id_string(app_data[0xC])
     # get segments
+
     segment_count = app_data[0x1]
     segments = []
     offset = 0x18
@@ -127,14 +138,17 @@ def read_binary(dir_path):
     assert offset < len(app_data), "offset is out of bounds"
 
     # add checksum size
+
     image_size += 1
     image_size = (image_size + 15) & ~15
     # hash appended
+
     if app_data[0x17] == 1:
         image_size += 32
     print(f"image size: {image_size}")
 
     # verify the remaining data are all 0xFF
+
     for i in range(image_size, len(app_data)):
         if app_data[i] != 0xFF:
             print(f"Failed to verify image, data at 0x{i:08x} is not 0xFF")
@@ -143,12 +157,14 @@ def read_binary(dir_path):
     image_data = app_data[:image_size]
     
     # extract bin file
+
     bin_path = os.path.join(dir_path, "xiaozhi.bin")
     if not os.path.exists(bin_path):
         print("extract bin file to", bin_path)
         open(bin_path, "wb").write(image_data)
 
     # The app desc is in the first segment
+
     desc = get_app_desc(segments[0])
     return {
         "chip_id": chip_id,
@@ -171,6 +187,7 @@ def upload_dir_to_oss(source_dir, target_dir):
     for filename in os.listdir(source_dir):
         oss_key = os.path.join(target_dir, filename)
         # check if is file
+
         if not os.path.isfile(os.path.join(source_dir, filename)):
             continue
         print('uploading', oss_key)
@@ -178,33 +195,37 @@ def upload_dir_to_oss(source_dir, target_dir):
 
 def post_info_to_server(info):
     """
-    将固件信息发送到服务器
+    Send firmware information to server
     
     Args:
-        info: 包含固件信息的字典
+        info: dictionary containing firmware information
     """
     try:
-        # 从环境变量获取服务器URL和token
+        # Get server url and token from environment variables
+
         server_url = os.environ.get('VERSIONS_SERVER_URL')
         server_token = os.environ.get('VERSIONS_TOKEN')
         
         if not server_url or not server_token:
             raise Exception("Missing SERVER_URL or TOKEN in environment variables")
 
-        # 准备请求头和数据
+        # Prepare request headers and data
+
         headers = {
             'Authorization': f'Bearer {server_token}',
             'Content-Type': 'application/json'
         }
         
-        # 发送POST请求
+        # Send post request
+
         response = requests.post(
             server_url,
             headers=headers,
             json={'jsonData': json.dumps(info)}
         )
         
-        # 检查响应状态
+        # Check response status
+
         response.raise_for_status()
         
         print(f"Successfully uploaded version info for tag: {info['tag']}")
@@ -223,6 +244,7 @@ def post_info_to_server(info):
 def main():
     release_dir = "releases"
     # look for zip files startswith "v"
+
     for name in os.listdir(release_dir):
         if name.startswith("v") and name.endswith(".zip"):
             tag = name[:-4]
@@ -238,10 +260,13 @@ def main():
                 info["url"] = os.path.join(os.environ['OSS_BUCKET_URL'], target_dir, "xiaozhi.bin")
                 open(info_path, "w").write(json.dumps(info, indent=4))
                 # upload all file to oss
+
                 upload_dir_to_oss(folder, target_dir)
                 # read info.json
+
                 info = json.load(open(info_path))
                 # post info.json to server
+
                 post_info_to_server(info)
 
 

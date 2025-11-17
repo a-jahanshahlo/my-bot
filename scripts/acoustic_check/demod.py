@@ -11,10 +11,10 @@ class TraceGoertzel:
     
     def __init__(self, freq: float, n: int):
         """
-        Initialize goertzel algorithm
+        Initialize Goertzel algorithm
         
         Args:
-            freq: Normalized frequency (target frequency/sampling frequency)
+            freq: normalized frequency (target frequency/sampling frequency)
             n: window size
         """
         self.freq = freq
@@ -31,7 +31,7 @@ class TraceGoertzel:
         self.zs = deque([0.0, 0.0], maxlen=2)
     
     def reset(self):
-        """Reset algorithm state"""
+        """Reset algorithm status"""
         self.zs.clear()
         self.zs.extend([0.0, 0.0])
     
@@ -48,7 +48,7 @@ class TraceGoertzel:
         self.reset()
         for x in xs:
             z1, z2 = self.zs[-1], self.zs[-2]  # Z[-1], Z[-2]
-            z0 = x + self.c * z1 - z2  # S[n] = x[n] + C * S[n-1] - S[n-2]
+            z0 = x + self.c * z1 - z2  # S[n] = x[n] + C *S[n-1] -S[n-2]
             self.zs.append(float(z0))  # update sequence
         return self.amp
     
@@ -62,12 +62,12 @@ class TraceGoertzel:
 
 
 class PairGoertzel:
-    """Dual band goertzel demodulator"""
+    """Dual-band goertzel demodulator"""
     
     def __init__(self, f_sample: int, f_space: int, f_mark: int, 
                  bit_rate: int, win_size: int):
         """
-     Initialize dual-band demodulator
+        Initialize dual-band demodulator
         
         Args:
             f_sample: sampling frequency
@@ -76,7 +76,7 @@ class PairGoertzel:
             bit_rate: bit rate
             win_size: Goertzel window size
         """
-        assert f_sample % bit_rate == 0, "The sampling frequency must be an integer multiple of the bit rate"
+        assert f_sample % bit_rate == 0, "The sampling frequency must be an integer multiple of the bitrate"
         
         self.Fs = f_sample
         self.F0 = f_space
@@ -92,7 +92,7 @@ class PairGoertzel:
         self.g0 = TraceGoertzel(freq=f0, n=win_size)
         self.g1 = TraceGoertzel(freq=f1, n=win_size)
         
-        #Input buffer
+        # input buffer
         self.in_buffer = deque(maxlen=win_size)
         self.out_count = 0
         
@@ -135,7 +135,7 @@ class RealTimeAFSKDecoder:
         Args:
             f_sample: sampling frequency
             mark_freq: Mark frequency
-            space_freq: Space frequency 
+            space_freq: Space frequency
             bitrate: bitrate
             s_goertzel: Goertzel window size coefficient (win_size = f_sample //mark_freq *s_goertzel)
             threshold: decision threshold
@@ -149,7 +149,7 @@ class RealTimeAFSKDecoder:
         # Calculate window size -same as reference code
         win_size = int(f_sample / mark_freq * s_goertzel)
         
-        #Initialize the demodulator
+        # Initialize the demodulator
         self.demodulator = PairGoertzel(f_sample, space_freq, mark_freq, 
                                        bitrate, win_size)
         
@@ -159,16 +159,16 @@ class RealTimeAFSKDecoder:
         self.start_bits = "".join(format(int(x), '08b') for x in self.start_bytes)
         self.end_bits = "".join(format(int(x), '08b') for x in self.end_bytes)
 
-        # State machine
-        self.state = "Idle" # idle / entering
+        # state machine
+        self.state = "idle" # idle /entering
         
         # Store demodulation results
         self.buffer_prelude:deque = deque(maxlen=len(self.start_bits)) # Determine whether to start
         self.indicators = []  # Store probability sequence
-        self.signal_bits = ""  # store bit sequence
+        self.signal_bits = ""  # Store bit sequence
         self.text_cache = ""
         
-        #Decoding results
+        # Decoding result
         self.decoded_messages = []
         self.total_bits_received = 0
         
@@ -194,10 +194,10 @@ class RealTimeAFSKDecoder:
             if p1_prob is not None:
                 bit = '1' if p1_prob > self.threshold else '0'
                 match self.state:
-                    case "Idle":
+                    case "idle":
                         self.buffer_prelude.append(bit)
                         pass
-                    case "Entering":
+                    case "entering":
                         self.buffer_prelude.append(bit)
                         self.signal_bits += bit
                         self.total_bits_received += 1
@@ -205,14 +205,14 @@ class RealTimeAFSKDecoder:
                         pass
                 self.indicators.append(p1_prob)
 
-                # Check state machine
-                if self.state == "Idle" and "".join(self.buffer_prelude) == self.start_bits:
-                    self.state = "Entering"
+                # Check the state machine
+                if self.state == "idle" and "".join(self.buffer_prelude) == self.start_bits:
+                    self.state = "entering"
                     self.text_cache = ""
-                    self.signal_bits = ""  # Clear the bit sequence
+                    self.signal_bits = ""  # clear bit sequence
                     self.buffer_prelude.clear()
-                elif self.state == "Entering" and ("".join(self.buffer_prelude) == self.end_bits or len(self.signal_bits) >= 256):
-                    self.state = "Idle"
+                elif self.state == "entering" and ("".join(self.buffer_prelude) == self.end_bits or len(self.signal_bits) >= 256):
+                    self.state = "idle"
                     self.buffer_prelude.clear()
 
                 # Try decoding after collecting a certain number of bits
@@ -240,16 +240,16 @@ class RealTimeAFSKDecoder:
         byte_count = len(bits) // 8
         
         for i in range(byte_count):
-            #Extract 8 bits
+            # Extract 8 bits
             byte_bits = bits[i*8:(i+1)*8]
             
-            # Convert bits to bytes
+            # bit to byte
             byte_val = int(byte_bits, 2)
             
-            # Attempt to decode to ASCII characters
-            if 32 <= byte_val <= 126:  # Printable ASCII characters
+            # Try decoding to ascii characters
+            if 32 <= byte_val <= 126:  # Printable ascii characters
                 decoded_text += chr(byte_val)
-            elif byte_val == 0:  # NULL character, ignored
+            elif byte_val == 0:  # Null characters, ignored
                 continue
             else:
                 # Non-printable character pass, displayed in hexadecimal
@@ -269,4 +269,12 @@ class RealTimeAFSKDecoder:
     def get_stats(self) -> dict:
         """Get decoding statistics"""
         return {
+            'prelude_bits': "".join(self.buffer_prelude),
+            "state": self.state,
+            'total_chars': sum(len(msg) for msg in self.text_cache),
+            'buffer_bits': len(self.signal_bits),
+            'mark_freq': self.mark_freq,
+            'space_freq': self.space_freq,
+            'bitrate': self.bitrate,
+            'threshold': self.threshold,
         }

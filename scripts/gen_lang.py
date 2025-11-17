@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
+
 import argparse
 import json
 import os
 
-HEADER_TEMPLATE = """// Auto-generated language config
-// Language: {lang_code} with en-US fallback
+HEADER_TEMPLATE = """//Auto-generated language config
+//Language: {lang_code} with en-US fallback
 #pragma once
 
 #include <string_view>
 
 #ifndef {lang_code_for_font}
-    #define {lang_code_for_font}  // 預設語言
+    #define {lang_code_for_font} //Default language
 #endif
 
 namespace Lang {{
-    // 语言元数据
-    constexpr const char* CODE = "{lang_code}";
+    //language metadata
+    constexpr const char*CODE = "{lang_code}";
 
-    // 字符串资源 (en-US as fallback for missing keys)
+    //String resource (en-US as fallback for missing keys)
     namespace Strings {{
 {strings}
     }}
 
-    // 音效资源 (en-US as fallback for missing audio files)
+    //Audio resources (en-US as fallback for missing audio files)
     namespace Sounds {{
 {sounds}
     }}
@@ -30,7 +31,7 @@ namespace Lang {{
 """
 
 def load_base_language(assets_dir):
-    """加载 en-US 基准语言数据"""
+    """Load en-US base language data"""
     base_lang_path = os.path.join(assets_dir, 'locales', 'en-US', 'language.json')
     if os.path.exists(base_lang_path):
         try:
@@ -45,21 +46,26 @@ def load_base_language(assets_dir):
     return {'strings': {}}
 
 def get_sound_files(directory):
-    """获取目录中的音效文件列表"""
+    """Get the list of sound effect files in the directory"""
     if not os.path.exists(directory):
         return []
     return [f for f in os.listdir(directory) if f.endswith('.ogg')]
 
 def generate_header(lang_code, output_path):
-    # 从输出路径推导项目结构
-    # output_path 通常是 main/assets/lang_config.h
-    main_dir = os.path.dirname(output_path)  # main/assets
+    # Derivation of project structure from output path
+    # output_path is usually main/assets/lang_config.h
+
+    main_dir = os.path.dirname(output_path)  # Main/assets
+
     if os.path.basename(main_dir) == 'assets':
-        main_dir = os.path.dirname(main_dir)  # main
-    project_dir = os.path.dirname(main_dir)  # 项目根目录
+        main_dir = os.path.dirname(main_dir)  # Main
+
+    project_dir = os.path.dirname(main_dir)  # Project root directory
+
     assets_dir = os.path.join(main_dir, 'assets')
     
-    # 构建语言JSON文件路径
+    # Build language json file path
+
     input_path = os.path.join(assets_dir, 'locales', lang_code, 'language.json')
     
     print(f"Processing language: {lang_code}")
@@ -72,20 +78,24 @@ def generate_header(lang_code, output_path):
     with open(input_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # 验证数据结构
+    # Verify data structure
+
     if 'language' not in data or 'strings' not in data:
         raise ValueError("Invalid JSON structure")
 
-    # 加载 en-US 基准语言数据
+    # Load en-US base language data
+
     base_data = load_base_language(assets_dir)
     
-    # 合并字符串：以 en-US 为基准，用户语言覆盖
+    # Merge strings: based on en-US, user language coverage
+
     base_strings = base_data.get('strings', {})
     user_strings = data['strings']
     merged_strings = base_strings.copy()
     merged_strings.update(user_strings)
     
-    # 统计信息
+    # Statistics
+
     base_count = len(base_strings)
     user_count = len(user_strings)
     total_count = len(merged_strings)
@@ -98,28 +108,33 @@ def generate_header(lang_code, output_path):
     if fallback_count > 0:
         print(f"  - Fallback to en-US: {fallback_count} strings")
 
-    # 生成字符串常量
+    # Generate string constant
+
     strings = []
     sounds = []
     for key, value in merged_strings.items():
         value = value.replace('"', '\\"')
         strings.append(f'        constexpr const char* {key.upper()} = "{value}";')
 
-    # 收集音效文件：以 en-US 为基准，用户语言覆盖
+    # Collect sound effect files: based on en-US, user language coverage
+
     current_lang_dir = os.path.join(assets_dir, 'locales', lang_code)
     base_lang_dir = os.path.join(assets_dir, 'locales', 'en-US')
     common_dir = os.path.join(assets_dir, 'common')
     
-    # 获取所有可能的音效文件
+    # Get all possible sound effect files
+
     base_sounds = get_sound_files(base_lang_dir)
     current_sounds = get_sound_files(current_lang_dir)
     common_sounds = get_sound_files(common_dir)
     
-    # 合并音效文件列表：用户语言覆盖基准语言
+    # Merge sound effect file list: user language overrides base language
+
     all_sound_files = set(base_sounds)
     all_sound_files.update(current_sounds)
     
-    # 音效统计信息
+    # Sound statistics
+
     base_sound_count = len(base_sounds)
     user_sound_count = len(current_sounds)
     common_sound_count = len(common_sounds)
@@ -132,10 +147,12 @@ def generate_header(lang_code, output_path):
     if sound_fallback_count > 0:
         print(f"  - Sound fallback to en-US: {sound_fallback_count} sounds")
     
-    # 生成语言特定音效常量
+    # Generate language-specific sound effect constants
+
     for file in sorted(all_sound_files):
         base_name = os.path.splitext(file)[0]
-        # 优先使用当前语言的音效，如果不存在则回退到 en-US
+        # Prioritize using the sound effects of the current language, if they do not exist, fall back to en-US
+
         if file in current_sounds:
             sound_lang = lang_code.replace('-', '_').lower()
         else:
@@ -149,7 +166,8 @@ def generate_header(lang_code, output_path):
         static_cast<size_t>(ogg_{base_name}_end - ogg_{base_name}_start)
         }};''')
     
-    # 生成公共音效常量
+    # Generate public sound effect constants
+
     for file in sorted(common_sounds):
         base_name = os.path.splitext(file)[0]
         sounds.append(f'''
@@ -160,7 +178,8 @@ def generate_header(lang_code, output_path):
         static_cast<size_t>(ogg_{base_name}_end - ogg_{base_name}_start)
         }};''')
 
-    # 填充模板
+    # Fill template
+
     content = HEADER_TEMPLATE.format(
         lang_code=lang_code,
         lang_code_for_font=lang_code.replace('-', '_').lower(),
@@ -168,7 +187,8 @@ def generate_header(lang_code, output_path):
         sounds="\n".join(sorted(sounds))
     )
 
-    # 写入文件
+    # write file
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(content)
