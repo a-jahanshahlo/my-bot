@@ -1,5 +1,6 @@
-// image_to_jpeg.h - 图像到JPEG转换的高效编码接口
-// 节省约8KB SRAM的JPEG编码实现
+// image_to_jpeg.h -Efficient encoding interface for image to JPEG conversion
+// JPEG encoding implementation that saves about 8KB SRAM
+
 #pragma once
 #include "sdkconfig.h"
 #ifndef CONFIG_IDF_TARGET_ESP32
@@ -10,55 +11,57 @@
 
 typedef uint32_t v4l2_pix_fmt_t; // see linux/videodev2.h for details
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// JPEG输出回调函数类型
-// arg: 用户自定义参数, index: 当前数据索引, data: JPEG数据块, len: 数据块长度
-// 返回: 实际处理的字节数
+// JPEG output callback function type
+// arg: user-defined parameter, index: current data index, data: JPEG data block, len: data block length
+// Returns: actual number of bytes processed
+
 typedef size_t (*jpg_out_cb)(void *arg, size_t index, const void *data, size_t len);
 
 /**
- * @brief 将图像格式高效转换为JPEG
+ * @brief Efficient conversion of image formats to JPEG
  * 
- * 这个函数使用优化的JPEG编码器进行编码，主要特点：
- * - 节省约8KB的SRAM使用（静态变量改为堆分配）
- * - 支持多种图像格式输入
- * - 高质量JPEG输出
+ *This function uses an optimized JPEG encoder for encoding. Main features:
+ *-Save about 8KB of SRAM usage (static variables changed to heap allocation)
+ *-Supports input of multiple image formats
+ *-High quality JPEG output
  * 
- * @param src       源图像数据
- * @param src_len   源图像数据长度
- * @param width     图像宽度
- * @param height    图像高度  
- * @param format    图像格式 (PIXFORMAT_RGB565, PIXFORMAT_RGB888, 等)
- * @param quality   JPEG质量 (1-100)
- * @param out       输出JPEG数据指针 (需要调用者释放)
- * @param out_len   输出JPEG数据长度
+ * @param src source image data
+ * @param src_len source image data length
+ * @param width image width
+ * @param height image height  
+ * @param format image format (PIXFORMAT_RGB565, PIXFORMAT_RGB888, etc.)
+ * @param quality JPEG quality (1-100)
+ * @param out output JPEG data pointer (needs to be released by the caller)
+ * @param out_len output JPEG data length
  * 
- * @return true 成功, false 失败
+ * @return true for success, false for failure
  */
 bool image_to_jpeg(uint8_t *src, size_t src_len, uint16_t width, uint16_t height, 
                    v4l2_pix_fmt_t format, uint8_t quality, uint8_t **out, size_t *out_len);
 
 /**
- * @brief 将图像格式转换为JPEG（回调版本）
+ * @brief Convert image format to JPEG (callback version)
  * 
- * 使用回调函数处理JPEG输出数据，适合流式传输或分块处理：
- * - 节省约8KB的SRAM使用（静态变量改为堆分配）
- * - 支持流式输出，无需预分配大缓冲区
- * - 通过回调函数逐块处理JPEG数据
+ *Use callback function to process JPEG output data, suitable for streaming or chunked processing:
+ *-Save about 8KB of SRAM usage (static variables changed to heap allocation)
+ *-Supports streaming output without preallocating large buffers
+ *-Process JPEG data block by block through callback function
  * 
- * @param src       源图像数据
- * @param src_len   源图像数据长度
- * @param width     图像宽度
- * @param height    图像高度
- * @param format    图像格式
- * @param quality   JPEG质量 (1-100)
- * @param cb        输出回调函数
- * @param arg       传递给回调函数的用户参数
+ * @param src source image data
+ * @param src_len source image data length
+ * @param width image width
+ * @param height image height
+ * @param format image format
+ * @param quality JPEG quality (1-100)
+ * @param cb output callback function
+ * @param arg User parameters passed to the callback function
  * 
- * @return true 成功, false 失败
+ * @return true for success, false for failure
  */
 bool image_to_jpeg_cb(uint8_t *src, size_t src_len, uint16_t width, uint16_t height, 
                       v4l2_pix_fmt_t format, uint8_t quality, jpg_out_cb cb, void *arg);
@@ -68,3 +71,4 @@ bool image_to_jpeg_cb(uint8_t *src, size_t src_len, uint16_t width, uint16_t hei
 #endif
 
 #endif // ndef CONFIG_IDF_TARGET_ESP32
+

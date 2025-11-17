@@ -95,7 +95,7 @@ static gd_GIF * gif_open(gd_GIF * gif_base)
     /* Width x Height */
     width  = read_num(gif_base);
     height = read_num(gif_base);
-    /* FDSZ */
+    /* Fdsz */
     f_gif_read(gif_base, &fdsz, 1);
     /* Presence of GCT */
     if(!(fdsz & 0x80)) {
@@ -156,7 +156,8 @@ static gd_GIF * gif_open(gd_GIF * gif_base)
         gif->canvas[i * 4 + 0] = *(bgcolor + 2);
         gif->canvas[i * 4 + 1] = *(bgcolor + 1);
         gif->canvas[i * 4 + 2] = *(bgcolor + 0);
-        gif->canvas[i * 4 + 3] = 0x00;  // 初始化为透明，让第一帧根据自己的透明度设置来渲染
+        gif->canvas[i * 4 + 3] = 0x00;  // Initialize to transparent and let the first frame render according to its own transparency setting
+
     }
 #endif
     gif->anim_start = f_gif_seek(gif, 0, LV_FS_SEEK_CUR);
@@ -369,7 +370,7 @@ read_image_data(gd_GIF *gif, int interlace)
     ptr_row_start = ptr_base;
     ptr = ptr_row_start;
     sub_len = shift = 0;
-    /* decoder */
+    /* Decoder */
     pass = 0;
     y = 0;
     p_stack = gif->lzw_cache;
@@ -442,9 +443,9 @@ read_image_data(gd_GIF *gif, int interlace)
 
         curr_code = key;
         /*
-         * If the current code is a code that will be added to the decoding
-         * dictionary, it is composed of the data list corresponding to the
-         * previous key and its first data.
+         *If the current code is a code that will be added to the decoding
+         *dictionary, it is composed of the data list corresponding to the
+         *previous key and its first data.
          * */
         if (curr_code == slot && first_value >= 0) {
             *sp++ = first_value;
@@ -497,8 +498,8 @@ new_table(int key_size)
 }
 
 /* Add table entry. Return value:
- *  0 on success
- *  +1 if key size must be incremented after this addition
+ * 0 on success
+ * +1 if key size must be incremented after this addition
  *  -1 if could not realloc table */
 static int
 add_entry(Table ** tablep, uint16_t length, uint16_t prefix, uint8_t suffix)

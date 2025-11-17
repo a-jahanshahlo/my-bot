@@ -25,6 +25,7 @@
 Ota::Ota() {
 #ifdef ESP_EFUSE_BLOCK_USR_DATA
     // Read Serial Number from efuse user_data
+
     uint8_t serial_number[33] = {0};
     if (esp_efuse_read_field_blob(ESP_EFUSE_USER_DATA, serial_number, 32 * 8) == ESP_OK) {
         if (serial_number[0] == 0) {
@@ -69,13 +70,14 @@ std::unique_ptr<Http> Ota::SetupHttp() {
 }
 
 /* 
- * Specification: https://ccnphfhqs21z.feishu.cn/wiki/FjW6wZmisimNBBkov6OcmfvknVd
+ *Specification: https://ccnphfhqs21z.feishu.cn/wiki/FjW6wZmisimNBBkov6OcmfvknVd
  */
 bool Ota::CheckVersion() {
     auto& board = Board::GetInstance();
     auto app_desc = esp_app_get_description();
 
     // Check if there is a new firmware version available
+
     current_version_ = app_desc->version;
     ESP_LOGI(TAG, "Current version: %s", current_version_.c_str());
 
@@ -108,6 +110,7 @@ bool Ota::CheckVersion() {
     // Response: { "firmware": { "version": "1.0.0", "url": "http://" } }
     // Parse the JSON response and check if the version is newer
     // If it is, set has_new_version_ to true and store the new version and URL
+
     
     cJSON *root = cJSON_Parse(data.c_str());
     if (root == NULL) {
@@ -188,17 +191,22 @@ bool Ota::CheckVersion() {
         cJSON *timezone_offset = cJSON_GetObjectItem(server_time, "timezone_offset");
         
         if (cJSON_IsNumber(timestamp)) {
-            // 设置系统时间
+            // Set system time
+
             struct timeval tv;
             double ts = timestamp->valuedouble;
             
-            // 如果有时区偏移，计算本地时间
+            // If there is a zone offset, calculate local time
+
             if (cJSON_IsNumber(timezone_offset)) {
-                ts += (timezone_offset->valueint * 60 * 1000); // 转换分钟为毫秒
+                ts += (timezone_offset->valueint * 60 * 1000); // Convert minutes to milliseconds
+
             }
             
-            tv.tv_sec = (time_t)(ts / 1000);  // 转换毫秒为秒
-            tv.tv_usec = (suseconds_t)((long long)ts % 1000) * 1000;  // 剩余的毫秒转换为微秒
+            tv.tv_sec = (time_t)(ts / 1000);  // Convert milliseconds to seconds
+
+            tv.tv_usec = (suseconds_t)((long long)ts % 1000) * 1000;  // Convert remaining milliseconds to microseconds
+
             settimeofday(&tv, NULL);
             has_server_time_ = true;
         }
@@ -220,6 +228,7 @@ bool Ota::CheckVersion() {
 
         if (cJSON_IsString(version) && cJSON_IsString(url)) {
             // Check if the version is newer, for example, 0.1.0 is newer than 0.0.1
+
             has_new_version_ = IsNewVersionAvailable(current_version_, firmware_version_);
             if (has_new_version_) {
                 ESP_LOGI(TAG, "New version available: %s", firmware_version_.c_str());
@@ -227,6 +236,7 @@ bool Ota::CheckVersion() {
                 ESP_LOGI(TAG, "Current is the latest version");
             }
             // If the force flag is set to 1, the given version is forced to be installed
+
             cJSON *force = cJSON_GetObjectItem(firmware, "force");
             if (cJSON_IsNumber(force) && force->valueint == 1) {
                 has_new_version_ = true;
@@ -302,6 +312,7 @@ bool Ota::Upgrade(const std::string& firmware_url) {
         }
 
         // Calculate speed and progress every second
+
         recent_read += ret;
         total_read += ret;
         if (esp_timer_get_time() - last_calc_time >= 1000000 || ret == 0) {
@@ -410,9 +421,11 @@ std::string Ota::GetActivationPayload() {
 
     std::string hmac_hex;
 #ifdef SOC_HMAC_SUPPORTED
-    uint8_t hmac_result[32]; // SHA-256 输出为32字节
+    uint8_t hmac_result[32]; // SHA-256 output is 32 bytes
+
     
-    // 使用Key0计算HMAC
+    // Calculate hmac using key0
+
     esp_err_t ret = esp_hmac_calculate(HMAC_KEY0, (uint8_t*)activation_challenge_.data(), activation_challenge_.size(), hmac_result);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "HMAC calculation failed: %s", esp_err_to_name(ret));

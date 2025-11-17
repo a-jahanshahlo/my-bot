@@ -1,6 +1,6 @@
 /*
- * MCP Server Implementation
- * Reference: https://modelcontextprotocol.io/specification/2024-11-05
+ *MCP Server Implementation
+ *Reference: https://modelcontextprotocol.io/specification/2024-11-05
  */
 
 #include "mcp_server.h"
@@ -31,16 +31,19 @@ McpServer::~McpServer() {
 }
 
 void McpServer::AddCommonTools() {
-    // *Important* To speed up the response time, we add the common tools to the beginning of
+    // *Important*To speed up the response time, we add the common tools to the beginning of
     // the tools list to utilize the prompt cache.
-    // **重要** 为了提升响应速度，我们把常用的工具放在前面，利用 prompt cache 的特性。
+    // **Important**In order to improve the response speed, we put commonly used tools in front and take advantage of the prompt cache feature.
+
 
     // Backup the original tools list and restore it after adding the common tools.
+
     auto original_tools = std::move(tools_);
     auto& board = Board::GetInstance();
 
     // Do not add custom tools here.
     // Custom tools must be added in the board's InitializeTools function.
+
 
     AddTool("self.get_device_status",
         "Provides the real-time information of the device, including the current status of the audio speaker, screen, battery, network, etc.\n"
@@ -110,6 +113,7 @@ void McpServer::AddCommonTools() {
             }),
             [camera](const PropertyList& properties) -> ReturnValue {
                 // Lower the priority to do the camera capture
+
                 TaskPriorityReset priority_reset(1);
 
                 if (!camera->Capture()) {
@@ -122,11 +126,13 @@ void McpServer::AddCommonTools() {
 #endif
 
     // Restore the original tools list to the end of the tools list
+
     tools_.insert(tools_.end(), original_tools.begin(), original_tools.end());
 }
 
 void McpServer::AddUserOnlyTools() {
     // System tools
+
     AddUserOnlyTool("self.get_system_info",
         "Get the system information",
         PropertyList(),
@@ -149,6 +155,7 @@ void McpServer::AddUserOnlyTools() {
         });
 
     // Firmware upgrade
+
     AddUserOnlyTool("self.upgrade_firmware", "Upgrade firmware from a specific URL. This will download and install the firmware, then reboot the device.",
         PropertyList({
             Property("url", kPropertyTypeString, "The URL of the firmware binary file to download and install")
@@ -171,6 +178,7 @@ void McpServer::AddUserOnlyTools() {
         });
 
     // Display control
+
 #ifdef HAVE_LVGL
     auto display = dynamic_cast<LvglDisplay*>(Board::GetInstance().GetDisplay());
     if (display) {
@@ -205,7 +213,8 @@ void McpServer::AddUserOnlyTools() {
 
                 ESP_LOGI(TAG, "Upload snapshot %u bytes to %s", jpeg_data.size(), url.c_str());
                 
-                // 构造multipart/form-data请求体
+                // Construct multipart/form data request body
+
                 std::string boundary = "----ESP32_SCREEN_SNAPSHOT_BOUNDARY";
                 
                 auto http = Board::GetInstance().GetNetwork()->CreateHttp(3);
@@ -214,7 +223,8 @@ void McpServer::AddUserOnlyTools() {
                     throw std::runtime_error("Failed to open URL: " + url);
                 }
                 {
-                    // 文件字段头部
+                    // File field header
+
                     std::string file_header;
                     file_header += "--" + boundary + "\r\n";
                     file_header += "Content-Disposition: form-data; name=\"file\"; filename=\"screenshot.jpg\"\r\n";
@@ -223,11 +233,13 @@ void McpServer::AddUserOnlyTools() {
                     http->Write(file_header.c_str(), file_header.size());
                 }
 
-                // JPEG数据
+                // jpeg data
+
                 http->Write((const char*)jpeg_data.data(), jpeg_data.size());
 
                 {
-                    // multipart尾部
+                    // Multipart tail
+
                     std::string multipart_footer;
                     multipart_footer += "\r\n--" + boundary + "--\r\n";
                     http->Write(multipart_footer.c_str(), multipart_footer.size());
@@ -282,11 +294,14 @@ void McpServer::AddUserOnlyTools() {
                 display->SetPreviewImage(std::move(image));
                 return true;
             });
-#endif // CONFIG_LV_USE_SNAPSHOT
+#endif // Config lv use snapshot
+
     }
-#endif // HAVE_LVGL
+#endif // Have lvgl
+
 
     // Assets download url
+
     auto& assets = Assets::GetInstance();
     if (assets.partition_valid()) {
         AddUserOnlyTool("self.assets.set_download_url", "Set the download url for the assets",
@@ -304,6 +319,7 @@ void McpServer::AddUserOnlyTools() {
 
 void McpServer::AddTool(McpTool* tool) {
     // Prevent adding duplicate tools
+
     if (std::find_if(tools_.begin(), tools_.end(), [tool](const McpTool* t) { return t->name() == tool->name(); }) != tools_.end()) {
         ESP_LOGW(TAG, "Tool %s already added", tool->name().c_str());
         return;
@@ -354,6 +370,7 @@ void McpServer::ParseCapabilities(const cJSON* capabilities) {
 
 void McpServer::ParseMessage(const cJSON* json) {
     // Check JSONRPC version
+
     auto version = cJSON_GetObjectItem(json, "jsonrpc");
     if (version == nullptr || !cJSON_IsString(version) || strcmp(version->valuestring, "2.0") != 0) {
         ESP_LOGE(TAG, "Invalid JSONRPC version: %s", version ? version->valuestring : "null");
@@ -361,6 +378,7 @@ void McpServer::ParseMessage(const cJSON* json) {
     }
     
     // Check method
+
     auto method = cJSON_GetObjectItem(json, "method");
     if (method == nullptr || !cJSON_IsString(method)) {
         ESP_LOGE(TAG, "Missing method");
@@ -373,6 +391,7 @@ void McpServer::ParseMessage(const cJSON* json) {
     }
     
     // Check params
+
     auto params = cJSON_GetObjectItem(json, "params");
     if (params != nullptr && !cJSON_IsObject(params)) {
         ESP_LOGE(TAG, "Invalid params for method: %s", method_str.c_str());
@@ -463,7 +482,8 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     std::string next_cursor = "";
     
     while (it != tools_.end()) {
-        // 如果我们还没有找到起始位置，继续搜索
+        // If we haven't found the starting position yet, continue searching
+
         if (!found_cursor) {
             if ((*it)->name() == cursor) {
                 found_cursor = true;
@@ -478,10 +498,12 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
             continue;
         }
         
-        // 添加tool前检查大小
+        // Check size before adding tool
+
         std::string tool_json = (*it)->to_json() + ",";
         if (json.length() + tool_json.length() + 30 > max_payload_size) {
-            // 如果添加这个tool会超出大小限制，设置next_cursor并退出循环
+            // If adding this tool will exceed the size limit, set the next cursor and exit the loop
+
             next_cursor = (*it)->name();
             break;
         }
@@ -495,7 +517,8 @@ void McpServer::GetToolsList(int id, const std::string& cursor, bool list_user_o
     }
     
     if (json.back() == '[' && !tools_.empty()) {
-        // 如果没有添加任何tool，返回错误
+        // If no tool is added, an error is returned
+
         ESP_LOGE(TAG, "tools/list: Failed to add tool %s because of payload size limit", next_cursor.c_str());
         ReplyError(id, "Failed to add tool " + next_cursor + " because of payload size limit");
         return;
@@ -553,6 +576,7 @@ void McpServer::DoToolCall(int id, const std::string& tool_name, const cJSON* to
     }
 
     // Use main thread to call the tool
+
     auto& app = Application::GetInstance();
     app.Schedule([this, id, tool_iter, arguments = std::move(arguments)]() {
         try {

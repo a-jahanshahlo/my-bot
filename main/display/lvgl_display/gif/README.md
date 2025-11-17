@@ -1,17 +1,17 @@
-# 说明 / Description
+# Description /Description
 
-## 中文
+## Chinese
 
-本目录代码移植自 LVGL 的 GIF 程序。
+The code in this directory is transplanted from LVGL's GIF program.
 
-主要修复和改进：
-- 修复了透明背景问题
-- 兼容了 87a 版本的 GIF 格式
+Major fixes and improvements:
+-Fixed transparent background issue
+-Compatible with version 87a of GIF format
 
 ## English
 
 The code in this directory is ported from LVGL's GIF program.
 
 Main fixes and improvements:
-- Fixed transparent background issues
-- Added compatibility for GIF 87a version format
+-Fixed transparent background issues
+-Added compatibility for GIF 87a version format

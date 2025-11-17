@@ -38,7 +38,8 @@ public:
         static Application instance;
         return instance;
     }
-    // 删除拷贝构造函数和赋值运算符
+    // Remove copy constructor and assignment operator
+
     Application(const Application&) = delete;
     Application& operator=(const Application&) = delete;
 
@@ -107,4 +108,5 @@ private:
     BaseType_t original_priority_;
 };
 
-#endif // _APPLICATION_H_
+#endif // Application h
+

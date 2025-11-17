@@ -90,7 +90,7 @@ private:
     }
 
     void InitializeOttoController() {
-        ESP_LOGI(TAG, "初始化Otto机器人MCP控制器");
+        ESP_LOGI(TAG, "Initialize otto robot mcp controller");
         ::InitializeOttoController();
     }
 

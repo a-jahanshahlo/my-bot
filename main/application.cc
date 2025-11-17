@@ -81,6 +81,7 @@ void Application::CheckAssetsVersion() {
     
     Settings settings("assets", true);
     // Check if there is a new assets need to be downloaded
+
     std::string download_url = settings.GetString("download_url");
 
     if (!download_url.empty()) {
@@ -91,6 +92,7 @@ void Application::CheckAssetsVersion() {
         Alert(Lang::Strings::LOADING_ASSETS, message, "cloud_arrow_down", Lang::Sounds::OGG_UPGRADE);
         
         // Wait for the audio service to be idle for 3 seconds
+
         vTaskDelay(pdMS_TO_TICKS(3000));
         SetDeviceState(kDeviceStateUpgrading);
         board.SetPowerSaveMode(false);
@@ -115,6 +117,7 @@ void Application::CheckAssetsVersion() {
     }
 
     // Apply assets
+
     assets.Apply();
     display->SetChatMessage("system", "");
     display->SetEmotion("microchip_ai");
@@ -123,7 +126,8 @@ void Application::CheckAssetsVersion() {
 void Application::CheckNewVersion(Ota& ota) {
     const int MAX_RETRY = 10;
     int retry_count = 0;
-    int retry_delay = 10; // 初始重试延迟为10秒
+    int retry_delay = 10; // Initial retry delay is 10 seconds
+
 
     auto& board = Board::GetInstance();
     while (true) {
@@ -149,34 +153,42 @@ void Application::CheckNewVersion(Ota& ota) {
                     break;
                 }
             }
-            retry_delay *= 2; // 每次重试后延迟时间翻倍
+            retry_delay *= 2; // The delay is doubled after each retry
+
             continue;
         }
         retry_count = 0;
-        retry_delay = 10; // 重置重试延迟时间
+        retry_delay = 10; // Reset retry delay time
+
 
         if (ota.HasNewVersion()) {
             if (UpgradeFirmware(ota)) {
                 return; // This line will never be reached after reboot
+
             }
             // If upgrade failed, continue to normal operation (don't break, just fall through)
+
         }
 
         // No new version, mark the current version as valid
+
         ota.MarkCurrentVersionValid();
         if (!ota.HasActivationCode() && !ota.HasActivationChallenge()) {
             xEventGroupSetBits(event_group_, MAIN_EVENT_CHECK_NEW_VERSION_DONE);
             // Exit the loop if done checking new version
+
             break;
         }
 
         display->SetStatus(Lang::Strings::ACTIVATION);
         // Activation code is shown to the user and waiting for the user to input
+
         if (ota.HasActivationCode()) {
             ShowActivationCode(ota.GetActivationCode(), ota.GetActivationMessage());
         }
 
         // This will block the loop until the activation is done or timeout
+
         for (int i = 0; i < 10; ++i) {
             ESP_LOGI(TAG, "Activating... %d/%d", i + 1, 10);
             esp_err_t err = ota.Activate();
@@ -214,6 +226,7 @@ void Application::ShowActivationCode(const std::string& code, const std::string&
     }};
 
     // This sentence uses 9KB of SRAM, so we need to wait for it to finish
+
     Alert(Lang::Strings::ACTIVATION, message.c_str(), "link", Lang::Sounds::OGG_ACTIVATION);
 
     for (const auto& digit : code) {
@@ -333,6 +346,7 @@ void Application::StopListening() {
         kDeviceStateIdle,
     };
     // If not valid, do nothing
+
     if (std::find(valid_states.begin(), valid_states.end(), device_state_) == valid_states.end()) {
         return;
     }
@@ -353,6 +367,7 @@ void Application::Start() {
     auto display = board.GetDisplay();
 
     // Print board name/version info
+
     display->SetChatMessage("system", SystemInfo::GetUserAgent().c_str());
 
     /* Setup the audio service */
@@ -373,6 +388,7 @@ void Application::Start() {
     audio_service_.SetCallbacks(callbacks);
 
     // Start the main event loop task with priority 3
+
     xTaskCreate([](void* arg) {
         ((Application*)arg)->MainEventLoop();
         vTaskDelete(NULL);
@@ -385,19 +401,24 @@ void Application::Start() {
     board.StartNetwork();
 
     // Update the status bar immediately to show the network state
+
     display->UpdateStatusBar(true);
 
     // Check for new assets version
+
     CheckAssetsVersion();
 
     // Check for new firmware version or get the MQTT broker address
+
     Ota ota;
     CheckNewVersion(ota);
 
     // Initialize the protocol
+
     display->SetStatus(Lang::Strings::LOADING_PROTOCOL);
 
     // Add MCP common tools before initializing the protocol
+
     auto& mcp_server = McpServer::GetInstance();
     mcp_server.AddCommonTools();
     mcp_server.AddUserOnlyTools();
@@ -441,6 +462,7 @@ void Application::Start() {
     });
     protocol_->OnIncomingJson([this, display](const cJSON* root) {
         // Parse JSON data
+
         auto type = cJSON_GetObjectItem(root, "type");
         if (strcmp(type->valuestring, "tts") == 0) {
             auto state = cJSON_GetObjectItem(root, "state");
@@ -496,6 +518,7 @@ void Application::Start() {
                 ESP_LOGI(TAG, "System command: %s", command->valuestring);
                 if (strcmp(command->valuestring, "reboot") == 0) {
                     // Do a reboot if user requests a OTA update
+
                     Schedule([this]() {
                         Reboot();
                     });
@@ -539,11 +562,13 @@ void Application::Start() {
         display->ShowNotification(message.c_str());
         display->SetChatMessage("system", "");
         // Play the success sound to indicate the device is ready
+
         audio_service_.PlaySound(Lang::Sounds::OGG_SUCCESS);
     }
 }
 
 // Add a async task to MainLoop
+
 void Application::Schedule(std::function<void()> callback) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -555,6 +580,7 @@ void Application::Schedule(std::function<void()> callback) {
 // The Main Event Loop controls the chat state and websocket connection
 // If other tasks need to access the websocket or chat state,
 // they should use Schedule to call this function
+
 void Application::MainEventLoop() {
     while (true) {
         auto bits = xEventGroupWaitBits(event_group_, MAIN_EVENT_SCHEDULE |
@@ -603,9 +629,11 @@ void Application::MainEventLoop() {
             display->UpdateStatusBar();
         
             // Print the debug info every 10 seconds
+
             if (clock_ticks_ % 10 == 0) {
                 // SystemInfo::PrintTaskCpuUsage(pdMS_TO_TICKS(1000));
                 // SystemInfo::PrintTaskList();
+
                 SystemInfo::PrintHeapStats();
             }
         }
@@ -632,15 +660,18 @@ void Application::OnWakeWordDetected() {
         ESP_LOGI(TAG, "Wake word detected: %s", wake_word.c_str());
 #if CONFIG_SEND_WAKE_WORD_DATA
         // Encode and send the wake word data to the server
+
         while (auto packet = audio_service_.PopWakeWordPacket()) {
             protocol_->SendAudio(std::move(packet));
         }
         // Set the chat state to wake word detected
+
         protocol_->SendWakeWordDetected(wake_word);
         SetListeningMode(aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
 #else
         SetListeningMode(aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
         // Play the pop up sound to indicate the wake word is detected
+
         audio_service_.PlaySound(Lang::Sounds::OGG_POPUP);
 #endif
     } else if (device_state_ == kDeviceStateSpeaking) {
@@ -674,6 +705,7 @@ void Application::SetDeviceState(DeviceState state) {
     ESP_LOGI(TAG, "STATE: %s", STATE_STRINGS[device_state_]);
 
     // Send the state change event
+
     DeviceStateEventManager::GetInstance().PostStateChangeEvent(previous_state, state);
 
     auto& board = Board::GetInstance();
@@ -698,8 +730,10 @@ void Application::SetDeviceState(DeviceState state) {
             display->SetEmotion("neutral");
 
             // Make sure the audio processor is running
+
             if (!audio_service_.IsAudioProcessorRunning()) {
                 // Send the start listening command
+
                 protocol_->SendStartListening(listening_mode_);
                 audio_service_.EnableVoiceProcessing(true);
                 audio_service_.EnableWakeWordDetection(false);
@@ -711,12 +745,14 @@ void Application::SetDeviceState(DeviceState state) {
             if (listening_mode_ != kListeningModeRealtime) {
                 audio_service_.EnableVoiceProcessing(false);
                 // Only AFE wake word can be detected in speaking mode
+
                 audio_service_.EnableWakeWordDetection(audio_service_.IsAfeWakeWord());
             }
             audio_service_.ResetDecoder();
             break;
         default:
             // Do nothing
+
             break;
     }
 }
@@ -724,6 +760,7 @@ void Application::SetDeviceState(DeviceState state) {
 void Application::Reboot() {
     ESP_LOGI(TAG, "Rebooting...");
     // Disconnect the audio channel
+
     if (protocol_ && protocol_->IsAudioChannelOpened()) {
         protocol_->CloseAudioChannel();
     }
@@ -739,10 +776,12 @@ bool Application::UpgradeFirmware(Ota& ota, const std::string& url) {
     auto display = board.GetDisplay();
     
     // Use provided URL or get from OTA object
+
     std::string upgrade_url = url.empty() ? ota.GetFirmwareUrl() : url;
     std::string version_info = url.empty() ? ota.GetFirmwareVersion() : "(Manual upgrade)";
     
     // Close audio channel if it's open
+
     if (protocol_ && protocol_->IsAudioChannelOpened()) {
         ESP_LOGI(TAG, "Closing audio channel before firmware upgrade");
         protocol_->CloseAudioChannel();
@@ -771,17 +810,22 @@ bool Application::UpgradeFirmware(Ota& ota, const std::string& url) {
 
     if (!upgrade_success) {
         // Upgrade failed, restart audio service and continue running
+
         ESP_LOGE(TAG, "Firmware upgrade failed, restarting audio service and continuing operation...");
         audio_service_.Start(); // Restart audio service
+
         board.SetPowerSaveMode(true); // Restore power save mode
+
         Alert(Lang::Strings::ERROR, Lang::Strings::UPGRADE_FAILED, "circle_xmark", Lang::Sounds::OGG_EXCLAMATION);
         vTaskDelay(pdMS_TO_TICKS(3000));
         return false;
     } else {
         // Upgrade success, reboot immediately
+
         ESP_LOGI(TAG, "Firmware upgrade successful, rebooting...");
         display->SetChatMessage("system", "Upgrade successful, rebooting...");
         vTaskDelay(pdMS_TO_TICKS(1000)); // Brief pause to show message
+
         Reboot();
         return true;
     }
@@ -806,15 +850,18 @@ void Application::WakeWordInvoke(const std::string& wake_word) {
         ESP_LOGI(TAG, "Wake word detected: %s", wake_word.c_str());
 #if CONFIG_USE_AFE_WAKE_WORD || CONFIG_USE_CUSTOM_WAKE_WORD
         // Encode and send the wake word data to the server
+
         while (auto packet = audio_service_.PopWakeWordPacket()) {
             protocol_->SendAudio(std::move(packet));
         }
         // Set the chat state to wake word detected
+
         protocol_->SendWakeWordDetected(wake_word);
         SetListeningMode(aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
 #else
         SetListeningMode(aec_mode_ == kAecOff ? kListeningModeAutoStop : kListeningModeRealtime);
         // Play the pop up sound to indicate the wake word is detected
+
         audio_service_.PlaySound(Lang::Sounds::OGG_POPUP);
 #endif
     } else if (device_state_ == kDeviceStateSpeaking) {
@@ -844,6 +891,7 @@ bool Application::CanEnterSleepMode() {
     }
 
     // Now it is safe to enter sleep mode
+
     return true;
 }
 
@@ -853,6 +901,7 @@ void Application::SendMcpMessage(const std::string& payload) {
     }
 
     // Make sure you are using main thread to send MCP message
+
     if (xTaskGetCurrentTaskHandle() == main_event_loop_task_handle_) {
         protocol_->SendMcpMessage(payload);
     } else {
@@ -883,6 +932,7 @@ void Application::SetAecMode(AecMode mode) {
         }
 
         // If the AEC mode is changed, close the audio channel
+
         if (protocol_ && protocol_->IsAudioChannelOpened()) {
             protocol_->CloseAudioChannel();
         }
